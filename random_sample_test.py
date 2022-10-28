@@ -4,23 +4,23 @@ from utils.tools import Piei
 from utils.plot_func import plot_simple_boundary
 
 # create some data
-n_samples = 100
-X = np.random.uniform(low=-2.,high=2.,size=(n_samples,1))
-y = 1.5*np.sin(np.pi*X[:,0]) + np.random.normal(loc=0.,scale=1.*np.power(X[:,0],2))
-y = y.reshape([-1,1])
-X_train = X.reshape(-1)
-y_train = y.reshape(-1)
-y_train = np.stack((y_train,y_train),axis=1) # make this 2d so will be accepted
-x_grid = np.linspace(-2,2,100) # for evaluation plots
+def gen_data(n=50, bound=1, deg=3, beta=1, noise=0.9, intcpt=-1):
+    x = np.linspace(-bound, bound, n)[:, np.newaxis]
+    h = np.linspace(-bound, bound, n)[:, np.newaxis]
+    e = np.random.randn(*x.shape) * (0.1 + 10 * np.abs(x))
+    y = 50 * (x ** deg) + h * beta + noise * e + intcpt
+    return x, y.squeeze()
 
+n_samples = 300
+x, y = gen_data(n_samples, noise=1.0)
 
 alpha = 0.1
-tf_pi = TF_PI(alpha, weight=[1, 1, 1])
-history = tf_pi.fit(X_train, y_train, epochs=1000)
-result = tf_pi.predict(X_train)
+tf_pi = TF_PI(alpha, weight=[3, 1, 1])
+history = tf_pi.fit(x, y, epochs=1000)
+result = tf_pi.predict(x)
 model_pieitfpi = Piei(result, y, (1-alpha),
-                      range(len(X)), range(len(X)))
+                      range(len(x)), range(len(x)))
 
 print("PICP = {}, PIMW = {}, PIAD = {}, PIEI = {}".format(model_pieitfpi.picp, model_pieitfpi.pimw,
                                                           model_pieitfpi.piad, model_pieitfpi.result_piei))
-plot_simple_boundary(result, X.squeeze(), y)
+plot_simple_boundary(result, x.squeeze(), y)
