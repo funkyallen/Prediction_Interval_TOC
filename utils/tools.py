@@ -1,5 +1,6 @@
 import numpy as np
 from tensorflow.python.ops.numpy_ops import np_config
+
 np_config.enable_numpy_behavior()
 
 
@@ -26,7 +27,7 @@ def all_to_pi(y_pred_all, style='average'):
     return y_pred_gauss_mid, y_pred_gauss_dev, up_low
 
 
-class Piei:
+class Loss_func:
     def __init__(self, up_low, target, miu, sample_position, pre_position, weight=[1, 1, 1]):
         self.pi = up_low
         self.target = target
@@ -42,7 +43,7 @@ class Piei:
         self.pre_position = pre_position
         self.position = self.merge_position()
         self.outlier, self.picp, self.pimw, self.piad = self.cal_cp_mw_ad()
-        self.result_piei = self.cal_piei()
+        self.loss = self.cal_loss()
 
     def merge_position(self):
         """
@@ -88,19 +89,19 @@ class Piei:
         print('PICP={},PIMW={},PIAD={}'.format(
             self.picp, self.pimw, self.piad))
 
-    def cal_piei(self):
-        piei = self.weight[2]*self.piad + self.weight[1]*self.pimw + self.weight[0]*self.lamda*self.batch_size / \
+    def cal_loss(self):
+        loss = self.weight[2]*self.piad + self.weight[1]*self.pimw + self.weight[0]*self.lamda*self.batch_size / \
             (self.miu*(1-self.miu))*(self.miu - self.picp)**2
-        return np.round(piei, 2)
+        return np.round(loss, 2)
 
 
 def cal_pi_index(result_all, target, alphas, sample_position, pre_position, weight=[1, 1, 1]):
     index_all = []
     outlier_list = []
     for i in range(result_all.shape[0]):
-        model_pieitfpi = Piei(result_all[i, :], target, (1-alphas[i]),
+        model_loss = Loss_func(result_all[i, :], target, (1-alphas[i]),
                               sample_position, pre_position)
-        index_all.append(np.array([model_pieitfpi.picp, model_pieitfpi.pimw,
-                                  model_pieitfpi.piad, model_pieitfpi.result_piei]))
-        outlier_list.append(model_pieitfpi.outlier)
+        index_all.append(np.array([model_loss.picp, model_loss.pimw,
+                                  model_loss.piad, model_loss.loss]))
+        outlier_list.append(model_loss.outlier)
     return index_all, outlier_list

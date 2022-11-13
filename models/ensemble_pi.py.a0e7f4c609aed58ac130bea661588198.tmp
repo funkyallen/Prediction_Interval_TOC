@@ -67,7 +67,7 @@ class Bootstrap_PI():
             result_all.append(result)
         result_all = np.array(result_all)
         y_pred_gauss_mid, y_pred_gauss_dev, up_low = all_to_pi(
-            result_all, style='average')
+            result_all, style='conservative')
         return result_all, hist, y_pred_gauss_mid, y_pred_gauss_dev, up_low
 
 

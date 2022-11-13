@@ -7,11 +7,12 @@
 @DateTime: 2022/7/6 0006 15:10
 """
 
-import matplotlib.pyplot as plt
-import numpy as np
+
 import time
 from collections import OrderedDict
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def PlotErrorBar(result, x, target, outer_list):
@@ -22,8 +23,9 @@ def PlotErrorBar(result, x, target, outer_list):
     plt.figure(int(time.time()))
     wid = len(target) / 100
     hei = np.percentile(result, 50) / 100
-    from matplotlib import patches
     from collections import OrderedDict
+
+    from matplotlib import patches
     plt.errorbar(x, point_result, yerr=error, fmt='none',
                  elinewidth=1.5, ms=3, mfc='wheat', mec='salmon', capsize=3)
     plt.scatter(x, target, label='Testing dataset', color='darkorange', s=65)
@@ -40,8 +42,8 @@ def PlotErrorBar(result, x, target, outer_list):
     handles, labels = plt.gca().get_legend_handles_labels()
     by_label = OrderedDict(zip(labels, handles))
     plt.tick_params(labelsize=20)
-    plt.xlabel('Sample', fontsize=23)
-    plt.ylabel('Scaled sound pressure level', fontsize=23)
+    plt.xlabel('Samples', fontsize=22)
+    plt.ylabel('1000$', fontsize=22)
     plt.legend(by_label.values(), by_label.keys(), fontsize=21)
     handles, labels = plt.gca().get_legend_handles_labels()
     by_label = OrderedDict(zip(labels, handles))
@@ -49,8 +51,9 @@ def PlotErrorBar(result, x, target, outer_list):
 
 
 def plot_pi_toc(up_low, merge_toc, logging_data, stratum_depth, stratum_name, list_train, model_std=None):
-    from matplotlib import patches
     from collections import OrderedDict
+
+    from matplotlib import patches
     fig = plt.figure(figsize=(16, 9))
     ax = fig.add_subplot()
     ax.hlines(2, logging_data['DEPT'].iloc[0], logging_data['DEPT'].iloc[-1], linestyles='dashed', color='dimgray',
@@ -62,11 +65,13 @@ def plot_pi_toc(up_low, merge_toc, logging_data, stratum_depth, stratum_name, li
     ax.tick_params(labelsize=20)
     ax.set_xlabel('Depth (m)', fontsize=23)
     ax.set_ylabel('TOC content (wt.%)', fontsize=23)
+    
     for i in range(1, len(stratum_depth)-1):
         ax.axvline(stratum_depth[i], ls='--')
+
     for i in range(len(stratum_name)):
-        ax.text((stratum_depth[i]+stratum_depth[i+1]) /
-                3, 4.5, stratum_name[i], fontsize=21)
+        plt.text((stratum_depth[i+1]-stratum_depth[i]) /
+                5+stratum_depth[i], 4.5, stratum_name[i], fontsize=21)
 
     plot_3 = ax.scatter(merge_toc['DEPT'], merge_toc['TOC'],
                         label='Training point', color='darkorange', s=65)
@@ -183,17 +188,24 @@ def plot_multi_boundary(y_pred_all, alphas, sample_position, pre_position, test_
     plt.show()
 
 
-def subplot_multi_boundary(y_pred_all, alphas, outlier_list, sample_position, pre_position, test_y):
+def subplot_multi_toc(y_pred_all, alphas, outlier_list, sample_position, pre_position, test_y, stratum_depth, stratum_name):
     from matplotlib import patches
     fig = plt.figure(figsize=(16, 9))
     for i in range(y_pred_all.shape[0]):
         plt.subplot(2, 2, i+1)
         plt.hlines(2, pre_position[0], pre_position[-1],
                    linestyles='dashed', color='dimgray')
+        for j in range(1, len(stratum_depth)-1):
+            plt.axvline(stratum_depth[j], ls='--')
+
+        for j in range(len(stratum_name)):
+            plt.text((stratum_depth[j+1]-stratum_depth[j]) /
+                    5+stratum_depth[j], 4.5, stratum_name[j], fontsize=21)
+
         for j in range(len(outlier_list[i])):
             plot_4 = plt.gca().add_patch(
                 patches.Ellipse(xy=(sample_position[outlier_list[i][j]], test_y[outlier_list[i][j]]),
-                                width=pre_position.shape[0] / 400,
+                                width=len(pre_position) / 400,
                                 height=(max(y_pred_all[i, :, 0]) -
                                         min(y_pred_all[i, :, 1])) / 5,
                                 fill=False, linewidth=2, color='m'))
@@ -208,14 +220,75 @@ def subplot_multi_boundary(y_pred_all, alphas, outlier_list, sample_position, pr
             plt.xlabel('Depth(m)', fontsize=16)
         if i % 2 == 0:
             plt.ylabel('TOC content (wt.%)', fontsize=16)
-        plt.ylim(0, 6)
+        plt.ylim(0, 8)
         plt.tick_params(labelsize=15)
         fig.tight_layout()
         plt.title(r'$ \alpha=$''%.2f' % alphas[i], fontsize=19)
-    # handles, labels = plt.gca().get_legend_handles_labels()  #get_legend_handles_labels
-    # by_label = OrderedDict(zip(labels, handles)) # remove dupulicated labels
-    # ax.legend(by_label.values(), by_label.keys(), fontsize=21)
+    plt.legend([plot_1, plot_2, plot_3, plot_4], ['Prediction interval',
+                                                  'Interval middle line', 'Test data points', 'Outer point'],
+               ncol=4, bbox_to_anchor=(0.05, -0.2), loc=10, fontsize=16)
+    # plt.savefig('images/ENSEM_TOC_{}.png'.format(str(int(time.time()))[6:]))
+    plt.show()
 
+def subplot_multi_boundary(y_pred_all, alphas, outlier_list, sample_position, pre_position, test_y):
+    from matplotlib import patches
+    fig = plt.figure(figsize=(16, 9))
+    for i in range(y_pred_all.shape[0]):
+        plt.subplot(2, 2, i+1)
+        for j in range(len(outlier_list[i])):
+            plot_4 = plt.gca().add_patch(
+                patches.Ellipse(xy=(sample_position[outlier_list[i][j]], test_y[outlier_list[i][j]]),
+                                width=len(pre_position) / 200,
+                                height=(max(y_pred_all[i, :, 0]) -
+                                        min(y_pred_all[i, :, 1])) / 15,
+                                fill=False, linewidth=2, color='m'))
+        midline = np.mean(y_pred_all[i, :], axis=1)
+        plot_1 = plt.fill_between(pre_position, y_pred_all[i, :, 0], y_pred_all[i, :, 1],
+                                  color='powderblue', label=r'$\alpha$={}'.format(alphas[i]))
+        plot_2, = plt.plot(pre_position, midline, color='royalblue',
+                           label='Interval midline')
+        plot_3 = plt.scatter(sample_position, test_y, color='darkorange',
+                             label='Test data points')
+        if i >= 2:
+            plt.xlabel('x', fontsize=16)
+        if i % 2 == 0:
+            plt.ylabel('y', fontsize=16)
+        plt.tick_params(labelsize=15)
+        fig.tight_layout()
+        plt.title(r'$ \alpha=$''%.2f' % alphas[i], fontsize=19)
+    plt.legend([plot_1, plot_2, plot_3, plot_4], ['Prediction interval',
+                                                  'Interval middle line', 'Test data points', 'Outer point'],
+               ncol=4, bbox_to_anchor=(0.05, -0.2), loc=10, fontsize=16)
+    # plt.savefig('images/ENSEM_TOC_{}.png'.format(str(int(time.time()))[6:]))
+    plt.show()
+
+def subplot_multi_boundary_2(y_pred_all, alphas, outlier_list, x, test_y):
+    from matplotlib import patches
+    fig = plt.figure(figsize=(16, 9))
+    for i in range(y_pred_all.shape[0]):
+        plt.subplot(2, 2, i+1)
+        for j in range(len(outlier_list[i])):
+            plot_4 = plt.gca().add_patch(
+                patches.Ellipse(xy=(x[outlier_list[i][j]], test_y[outlier_list[i][j]]),
+                                width=np.abs(max(x)-min(x)) / 200,
+                                height=(max(y_pred_all[i, :, 0]) -
+                                        min(y_pred_all[i, :, 1])) / 15,
+                                fill=False, linewidth=2, color='m'))
+        midline = np.mean(y_pred_all[i, :], axis=1)
+        plot_1 = plt.fill_between(x, y_pred_all[i, :, 0], y_pred_all[i, :, 1],
+                                  color='powderblue', label=r'$\alpha$={}'.format(alphas[i]))
+        plot_2, = plt.plot(x, midline, color='royalblue',
+                           label='Interval midline')
+        plot_3 = plt.scatter(x, test_y, color='darkorange',
+                             label='Test data points')
+        plt.grid()
+        if i >= 2:
+            plt.xlabel('x', fontsize=16)
+        if i % 2 == 0:
+            plt.ylabel('y', fontsize=16)
+        plt.tick_params(labelsize=15)
+        fig.tight_layout()
+        plt.title(r'$ \alpha=$''%.2f' % alphas[i], fontsize=19)
     plt.legend([plot_1, plot_2, plot_3, plot_4], ['Prediction interval',
                                                   'Interval middle line', 'Test data points', 'Outer point'],
                ncol=4, bbox_to_anchor=(0.05, -0.2), loc=10, fontsize=16)
