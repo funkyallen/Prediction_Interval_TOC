@@ -25,5 +25,5 @@
 
 `pip install -r requirements.txt  # install`
 
-##### If you have a GPU enviroment, you can use you GPU for training.
+##### If you have a GPU enviroment, you can use you GPU for training. Otherwish, you can change the learning rate and epochs for training faster.
 

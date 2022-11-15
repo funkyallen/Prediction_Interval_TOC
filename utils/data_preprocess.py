@@ -1,10 +1,11 @@
+import copy
+
+import matplotlib
+import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
-import matplotlib
-from sklearn import preprocessing
 from scipy import spatial
-import copy
+from sklearn import preprocessing
 
 matplotlib.use('TkAgg')
 
@@ -20,14 +21,11 @@ def fuzzy_merge(logging_data, toc_data):
     depth_toc = toc_data['DEPT'].to_numpy()
     depth_log = [[depth_log[i], depth_log[i]] for i in range(len(depth_log))]
     depth_toc = [[depth_toc[i], depth_toc[i]] for i in range(len(depth_toc))]
-    # print(depth_log)
     tree = spatial.KDTree(depth_log)
     _, _seq = tree.query(depth_toc)
     merge_toc = logging_data.iloc[_seq, :]
     merge_toc = merge_toc.drop_duplicates(subset='DEPT')
-    # merge_toc.loc[:, 'TOC'] = toc_data['TOC'].values
     merge_toc = pd.merge(merge_toc, toc_data, how='inner', on='DEPT')
-    # print(toc_data)
     return merge_toc
 
 
